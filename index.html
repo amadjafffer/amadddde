@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>STEP 3 — Full Table + Multi Track Numbers</title>
+<style>
+  :root{
+    --bg:#0b1120;--bg2:#0f172a;--card:#0b1220;--surface:#0a1222;
+    --text:#e5e7eb;--muted:#94a3b8;--line:#1f2a3a;
+    --accent:#22d3ee;--accent2:#38bdf8;--ok:#22c55e;--warn:#f59e0b;--danger:#ef4444;
+    --radius:16px;--gap:clamp(10px,1.2vw,16px);--fs:clamp(13px,1.1vw,15.5px);--shadow:0 20px 60px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,"Noto Sans Arabic",Cairo,sans-serif}
+  body{
+    margin:0;color:var(--text);background:
+      radial-gradient(1200px 600px at 100% -10%, #1e293b 16%, transparent 52%),
+      linear-gradient(180deg,var(--bg),var(--bg2) 60%,var(--bg));
+    font-size:var(--fs);
+  }
+  header{
+    position:sticky;top:0;z-index:10;backdrop-filter: blur(10px);
+    background:linear-gradient(180deg,rgba(11,17,32,.85),rgba(11,18,32,.45));
+    border-bottom:1px solid var(--line);
+  }
+  .wrap{max-width:min(1600px,94vw);margin:auto;padding:clamp(12px,1.4vw,20px)}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+  .badge{padding:6px 10px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:clamp(11px,.9vw,12px)}
+  h1{margin:0;font-size:clamp(20px,2.2vw,28px)}
+  .pill{margin-left:auto;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .btn{
+    background:linear-gradient(180deg,var(--accent),var(--accent2));
+    color:#001119;border:0;padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:700;
+    box-shadow:0 10px 30px rgba(34,211,238,.25);font-size:clamp(12px,1vw,14px)
+  }
+  .btn.secondary{background:#0f172a;color:var(--text);border:1px solid var(--line);box-shadow:none}
+  .btn.ghost{background:transparent;border:1px dashed var(--line);color:var(--muted)}
+  .btn.danger{background:linear-gradient(180deg,#ef4444,#dc2626);color:#fff}
+  .btn.small{padding:6px 10px;border-radius:10px;font-weight:600}
+
+  .card{
+    background:linear-gradient(180deg,rgba(11,18,32,.8),rgba(10,18,34,.6));
+    border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:clamp(12px,1.2vw,16px);margin-top:14px;
+  }
+  .grid{display:grid;gap:var(--gap)}
+  .form{grid-template-columns:repeat(12,1fr)}
+  label{font-size:.92rem;color:var(--muted)}
+  .field{
+    display:flex;flex-direction:column;gap:8px;background:rgba(15,23,42,.5);
+    padding:12px;border-radius:12px;border:1px solid #0f1a2a;
+  }
+  input,select,textarea{
+    width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);
+    background:#0b1424;color:var(--text);outline:none;font-size:inherit;
+  }
+  input[type="number"]{appearance:textfield}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+  .hint{font-size:.8rem;color:var(--muted)}
+  .col-2{grid-column:span 2}.col-3{grid-column:span 3}.col-4{grid-column:span 4}
+  .col-6{grid-column:span 6}.col-8{grid-column:span 8}.col-12{grid-column:span 12}
+
+  .drop{border:2px dashed #1f334a;border-radius:16px;padding:16px;text-align:center;cursor:pointer;background:linear-gradient(180deg,rgba(34,211,238,.06),transparent)}
+  .drop.hover{border-color:var(--accent)}
+  .preview{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+  .preview img{width:70px;height:70px;object-fit:cover;border-radius:10px;border:1px solid #16304a}
+
+  .section-title{font-weight:800;color:#c6e9f4;margin:6px 0 2px 2px}
+  .sub{font-size:.85rem;color:var(--muted);margin-top:-6px;margin-bottom:8px}
+
+  /* tags input (multi track numbers) */
+  .tags{
+    display:flex;flex-wrap:wrap;gap:8px;padding:8px;border:1px solid var(--line);border-radius:10px;background:#0b1424;min-height:45px
+  }
+  .tag{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid #17425a}
+  .tag button{background:transparent;border:0;color:#93c5fd;cursor:pointer}
+  .tags input{flex:1;min-width:160px;border:0;background:transparent;color:var(--text);padding:6px 8px;outline:none}
+
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:clamp(7px,.8vw,10px);border-bottom:1px solid var(--line);vertical-align:middle}
+  th{position:sticky;top:0;background:#0c1424;text-align:left;font-weight:700;color:#c6e9f4;font-size:clamp(11px,.9vw,13px);z-index:1}
+  tbody tr:hover{background:rgba(34,211,238,.06)}
+  .right{text-align:right}
+  .muted{color:var(--muted)}
+  .actions{display:flex;gap:8px;flex-wrap:wrap}
+  footer{color:var(--muted);text-align:center;padding:20px}
+
+  /* status badges */
+  .badge-status{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);font-size:clamp(11px,.9vw,12px);font-weight:700}
+  .badge-ok{background:rgba(34,197,94,.12);color:#86efac;border-color:#14532d}
+  .badge-warn{background:rgba(245,158,11,.12);color:#fde68a;border-color:#7c2d12}
+  .badge-danger{background:rgba(239,68,68,.12);color:#fecaca;border-color:#7f1d1d}
+
+  /* summary pill */
+  .summary{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:stretch
+  }
+  .summary .cell{
+    background:rgba(34,211,238,.06);border:1px solid #16304a;border-radius:12px;padding:10px 12px
+  }
+  .summary .k{font-size:.8rem;color:#7dd3fc}
+  .summary .v{font-weight:800}
+
+  /* responsive */
+  @media(max-width:1100px){.form{grid-template-columns:repeat(6,1fr)} .col-8{grid-column:span 6} .col-6{grid-column:span 6} .col-4{grid-column:span 6} .col-3{grid-column:span 3}}
+  @media(max-width:640px){.form{grid-template-columns:repeat(4,1fr)} .col-8,.col-6,.col-4{grid-column:span 4} .col-3{grid-column:span 4}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap row">
+    <div><div class="badge">STEP 3</div><h1>Orders — Full Flow (Multi Track Numbers)</h1></div>
+    <div class="pill">
+      <span class="badge" id="rowCount">0 items</span>
+      <input id="username" placeholder="Username" style="background:#0b1424;border:1px solid var(--line);color:var(--text);padding:8px 10px;border-radius:10px" />
+      <button class="btn secondary" id="saveUser">Save User</button>
+      <button class="btn" id="exportExcel">Export Excel</button>
+      <button class="btn ghost" id="exportCsv">Export CSV</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- summary block -->
+  <section class="card">
+    <div class="summary" id="summary">
+      <div class="cell"><div class="k">ORDER NO</div><div class="v" id="sumOrderNo">—</div></div>
+      <div class="cell"><div class="k">CUSTOMER</div><div class="v" id="sumCustomer">—</div></div>
+      <div class="cell"><div class="k">INFO</div><div class="v">1 TO 150 PCS IN 1 ORDER</div></div>
+      <div class="cell"><div class="k">AUTHOR</div><div class="v" id="sumUser">AUTO BY USERNAME</div></div>
+    </div>
+  </section>
+
+  <!-- form -->
+  <section class="card grid form" id="formCard">
+    <div class="col-12 section-title">Basics</div>
+    <div class="field col-3"><label>Order Date</label><input type="date" id="orderDate"></div>
+    <div class="field col-2"><label>Order No</label><input type="text" id="orderNo" placeholder="1"></div>
+    <div class="field col-3"><label>Customer</label><input type="text" id="customer" placeholder="CGC 1"></div>
+    <div class="field col-4"><label>Loading Type</label>
+      <select id="loadingType"><option>AIR WAY</option><option>SEA WAY</option><option>AIR WAY & SEA WAY</option></select>
+    </div>
+    <div class="field col-3"><label>Item</label><input type="text" id="item" placeholder="CLOTHES"></div>
+    <div class="field col-3"><label>Item Notes</label><input type="text" id="itemNotes" placeholder="RED COLOR"></div>
+    <div class="field col-3"><label>PCS Details</label><input type="text" id="pcsDetails" placeholder="SIZE - M"></div>
+    <div class="field col-3"><label>Total PCS</label><input type="number" id="totalPcs" min="0" step="1" value="1"></div>
+
+    <div class="field col-12"><label>Photo</label>
+      <div id="dropMain" class="drop">Drag & Drop images or click</div>
+      <input type="file" id="photoMain" accept="image/*" multiple hidden>
+      <div class="preview" id="prevMain"></div>
+    </div>
+
+    <div class="col-12 section-title">Prices</div>
+    <div class="field col-3"><label>ORG Price (CNY) / PCS</label><input type="number" id="orgPriceCny" step="0.01"></div>
+    <div class="field col-3"><label>PCS Price (CNY)</label><input type="number" id="pcsPriceCny" step="0.01"></div>
+    <div class="field col-3"><label>Express Fee (CNY)</label><input type="number" id="expressFee" step="0.01" value="0"></div>
+    <div class="field col-3"><label>Exchange Rate (CNY → USD)</label><input type="number" id="rate" step="0.0001" value="7.20"><div class="hint">USD = CNY ÷ rate</div></div>
+
+    <div class="field col-3"><label>Percent Type</label>
+      <select id="percentType"><option>0%</option><option>1%</option><option>2%</option><option>3%</option><option>5%</option><option>10%</option></select>
+    </div>
+    <div class="field col-3"><label>Commission (USD)</label><input type="number" id="commissionUsd" step="0.01" value="0"><div class="hint">Optional override</div></div>
+    <div class="field col-3"><label>Link / Market (WeChat)</label><input type="text" id="link"></div>
+    <div class="field col-3"><label>Which Website</label>
+      <select id="website"><option>1688</option><option>ALIBABA</option><option>TAOBAO</option><option>PINDUODUO</option><option>WECHAT</option><option>OTHER</option></select>
+    </div>
+
+    <div class="field col-3"><label>Customer Decision</label>
+      <select id="customerDecision"><option>PENDING</option><option>CONFIRMED</option><option>CANCELED</option></select>
+    </div>
+    <div class="field col-3"><label>Buy Item Date</label><input type="date" id="buyItemDate"></div>
+    <div class="field col-3"><label>Order Number (External)</label><input type="text" id="orderNumberExt" placeholder="supplier order no"></div>
+    <div class="field col-3"><label>Staff Decision</label><select id="staffDecision"><option>—</option><option>CONFIRMED</option><option>CANCELED</option></select></div>
+    <div class="field col-12"><label>If Cancel — Note</label><input type="text" id="cancelNote"></div>
+
+    <div class="col-12 section-title">Logistics — China</div>
+    <div class="field col-4"><label>Track Numbers (multi)</label>
+      <div id="tracks" class="tags"><input id="trackInput" placeholder="Type track and Enter"></div>
+      <div class="hint">Examples: YT757..., TQ231..., etc.</div>
+    </div>
+    <div class="field col-4"><label>Date & Time Arrived China Warehouse</label><input type="datetime-local" id="arriveCn"></div>
+    <div class="field col-4"><label>Warehouse Item Photo</label>
+      <div id="dropWh" class="drop">Drag & Drop images or click</div>
+      <input type="file" id="photoWh" accept="image/*" multiple hidden>
+      <div class="preview" id="prevWh"></div>
+    </div>
+    <div class="field col-4"><label>Items & PCS Correct?</label><select id="itemsCorrect"><option>YES</option><option>NO</option></select></div>
+    <div class="field col-8"><label>If NOT Correct — Write Note</label><input type="text" id="notCorrectNote"></div>
+    <div class="field col-4"><label>Customer Accept?</label><select id="customerAccept"><option>YES ACCEPT</option><option>NO RETURN</option></select></div>
+    <div class="field col-4"><label>Return Track</label><input type="text" id="returnTrack"></div>
+    <div class="field col-4"><label>Return Code</label><input type="text" id="returnCode"></div>
+    <div class="field col-4"><label>Money Refunded</label><input type="number" id="moneyRefunded" step="0.01"></div>
+    <div class="field col-8"><label>Container / Air Way Tracking Code</label><input type="text" id="containerCode" placeholder="ECMU7105016 - or airway code"></div>
+
+    <div class="col-12 section-title">Logistics — Iraq (CBM path)</div>
+    <div class="field col-3"><label>Arrived Iraq Warehouse (CBM)</label><select id="arrivedIqCbm"><option>YES</option><option>NO</option></select></div>
+    <div class="field col-3"><label>Date Arrived (CBM)</label><input type="date" id="arrivedIqDateCbm"></div>
+    <div class="field col-2"><label>Box No (CBM)</label><input type="text" id="boxNoCbm"></div>
+    <div class="field col-2"><label>Original Box CBM</label><input type="number" id="orgBoxCbm" step="0.001"></div>
+    <div class="field col-2"><label>Original CBM Price</label><input type="number" id="orgCbmPrice" step="0.01"></div>
+    <div class="field col-2"><label>Original CBM</label><input type="number" id="orgCbm" step="0.001"></div>
+    <div class="field col-2"><label>Total Original CBM Price</label><input type="number" id="totalOrgCbmPrice" step="0.01"></div>
+    <div class="field col-2"><label>CBM Price</label><input type="number" id="cbmPrice" step="0.01"></div>
+    <div class="field col-2"><label>CBM</label><input type="number" id="cbm" step="0.001"></div>
+    <div class="field col-2"><label>Total Order CBM Price</label><input type="number" id="totalOrderCbmPrice" step="0.01"></div>
+
+    <div class="col-12 section-title">Logistics — Iraq (KG path)</div>
+    <div class="field col-3"><label>Arrived Iraq Warehouse (KG)</label><select id="arrivedIqKg"><option>YES</option><option>NO</option></select></div>
+    <div class="field col-3"><label>Date Arrived (KG)</label><input type="date" id="arrivedIqDateKg"></div>
+    <div class="field col-2"><label>Box No (KG)</label><input type="text" id="boxNoKg"></div>
+    <div class="field col-2"><label>Original Box KG</label><input type="number" id="orgBoxKg" step="0.001"></div>
+    <div class="field col-2"><label>Original KG Price</label><input type="number" id="orgKgPrice" step="0.01"></div>
+    <div class="field col-2"><label>Original KG</label><input type="number" id="orgKg" step="0.001"></div>
+    <div class="field col-2"><label>Total Original KG Price</label><input type="number" id="totalOrgKgPrice" step="0.01"></div>
+    <div class="field col-2"><label>KG Price</label><input type="number" id="kgPrice" step="0.01"></div>
+    <div class="field col-2"><label>KG</label><input type="number" id="kg" step="0.001"></div>
+    <div class="field col-2"><label>Total Order KG Price</label><input type="number" id="totalOrderKgPrice" step="0.01"></div>
+
+    <div class="col-12 section-title">Finance</div>
+    <div class="field col-3"><label>Total Order Price (with anything)</label><input type="number" id="totalOrderPrice" step="0.01"></div>
+    <div class="field col-3"><label>Paid Deposit</label><input type="number" id="paidDeposit" step="0.01"></div>
+    <div class="field col-3"><label>Date Paid (Deposit)</label><input type="date" id="paidDepositDate"></div>
+    <div class="field col-3"><label>How Much Required</label><input type="number" id="howRequired" step="0.01"></div>
+    <div class="field col-3"><label>Before Receive — Need To Pay</label><input type="number" id="needBeforeReceive" step="0.01"></div>
+    <div class="field col-3"><label>Date Paid (Before Receive)</label><input type="date" id="needBeforeReceiveDate"></div>
+    <div class="field col-3"><label>Customer Receive Good</label><input type="date" id="customerReceiveDate"></div>
+    <div class="field col-3"><label>Notes</label><input type="text" id="notes"></div>
+
+    <div class="col-12 section-title">Targets</div>
+    <div class="field col-2"><label>Item Target</label><input type="number" id="itemTarget" step="0.01" value="0"></div>
+    <div class="field col-2"><label>Commission Target</label><input type="number" id="commissionTarget" step="0.01" value="0"></div>
+    <div class="field col-2"><label>CBM Target</label><input type="number" id="cbmTarget" step="0.01" value="0"></div>
+    <div class="field col-2"><label>KG Target</label><input type="number" id="kgTarget" step="0.01" value="0"></div>
+    <div class="field col-4"><label>Total Target</label><input type="number" id="totalTarget" step="0.01" value="0"></div>
+    <div class="field col-12"><label>Any Notes</label><input type="text" id="anyNotes"></div>
+
+    <div class="col-12" style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:6px">
+      <button class="btn ghost" id="resetForm">Reset</button>
+      <button class="btn" id="addRow">Add to Table</button>
+      <button class="btn small" id="saveEdit" style="display:none;background:linear-gradient(180deg,#22c55e,#16a34a)">Save Changes</button>
+      <span class="badge" id="editState" style="display:none">Editing row…</span>
+    </div>
+  </section>
+
+  <!-- table -->
+  <section class="card">
+    <div class="row" style="justify-content:space-between;margin-bottom:6px">
+      <strong>Rows</strong>
+      <div class="muted">Tip: Edit أي صف لتحميله إلى النموذج.</div>
+    </div>
+    <div style="overflow:auto;max-height:clamp(360px,52vh,620px);border:1px solid var(--line);border-radius:12px">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th>NO</th><th>ORDER DATE</th><th>ORDER NO</th><th>CUSTOMER</th><th>LOADING TYPE</th>
+            <th>ITEM</th><th>ITEM NOTS</th><th>PCS DETAILS</th><th class="right">TOTAL PCS</th><th>PHOTO</th>
+            <th class="right">ORG-PRICE CNY</th><th class="right">TOTAL ORG CNY</th><th class="right">TOTAL ORG $</th>
+            <th class="right">PCS PRICE CNY</th><th class="right">EXPRESS FEE</th><th class="right">EXCHNG. RATE</th><th class="right">PCS PRICE $</th>
+            <th class="right">TOTAL PCS CNY</th><th class="right">TOTAL PCS $</th><th>PER. TYPE</th><th class="right">COMMISSION $</th><th class="right">TOTAL + COMMISSION $</th>
+            <th>LINK</th><th>WEBSITE</th><th>CUST. DECISION</th><th>BUY ITEM DATE</th><th>ORDER NUMBER</th><th>STAFF DECISION</th><th>CANCEL NOTE</th>
+            <th>TRACK NUMBERS</th><th>ARRIVE CN WAREHOUSE</th><th>WAREHOUSE PHOTO</th><th>ITEMS CORRECT?</th><th>NOT CORRECT NOTE</th><th>CUSTOMER ACCEPT?</th>
+            <th>RETURN TRACK</th><th>RETURN CODE</th><th class="right">MONEY REFUNDED</th><th>CONTAINER/AIR CODE</th>
+            <th>ARRIVED IQ (CBM)</th><th>DATE IQ (CBM)</th><th>BOX NO (CBM)</th><th class="right">ORG BOX CBM</th><th class="right">ORG CBM PRICE</th><th class="right">ORG CBM</th><th class="right">TOTAL ORG CBM PRICE</th><th class="right">CBM PRICE</th><th class="right">CBM</th><th class="right">TOTAL ORDER CBM PRICE</th>
+            <th>ARRIVED IQ (KG)</th><th>DATE IQ (KG)</th><th>BOX NO (KG)</th><th class="right">ORG BOX KG</th><th class="right">ORG KG PRICE</th><th class="right">ORG KG</th><th class="right">TOTAL ORG KG PRICE</th><th class="right">KG PRICE</th><th class="right">KG</th><th class="right">TOTAL ORDER KG PRICE</th>
+            <th class="right">TOTAL ORDER PRICE</th><th class="right">PAID DEPOSIT</th><th>DATE PAID</th><th class="right">HOW MUCH REQUIRED</th><th class="right">NEED BEFORE RECEIVE</th><th>DATE PAID (BEFORE)</th><th>CUSTOMER RECEIVE</th><th>NOTES</th>
+            <th class="right">ITEM TARGET</th><th class="right">COMM TARGET</th><th class="right">CBM TARGET</th><th class="right">KG TARGET</th><th class="right">TOTAL TARGET</th><th>ANY NOTES</th>
+            <th>ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<footer>Premium dark • editable • multi-track • CSV/Excel export</footer>
+
+<!-- libs for Excel -->
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+
+<script>
+(function(){
+  const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
+  const nf=(v,cur='')=>(cur?cur+' ':'')+(isFinite(v)?Number(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}):'0.00');
+
+  // user name memory
+  const userEl = $('#username');
+  userEl.value = localStorage.getItem('orders_username') || '';
+  $('#saveUser').addEventListener('click', ()=>{
+    localStorage.setItem('orders_username', userEl.value.trim());
+    $('#sumUser').textContent = userEl.value.trim() ? ('AUTO BY ' + userEl.value.trim()) : 'AUTO BY USERNAME';
+  });
+  $('#sumUser').textContent = userEl.value.trim()?('AUTO BY '+userEl.value.trim()):'AUTO BY USERNAME';
+
+  // image drag helpers
+  function bindDrop(inputId, dropId, prevId){
+    const input=$(inputId), drop=$(dropId), prev=$(prevId);
+    drop.addEventListener('click', ()=>input.click());
+    ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('hover');}));
+    ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('hover');}));
+    drop.addEventListener('drop', e=>{input.files=e.dataTransfer.files; render();});
+    input.addEventListener('change', render);
+    function render(){
+      prev.innerHTML=''; [...input.files].slice(0,4).forEach(f=>{const img=new Image();img.src=URL.createObjectURL(f);img.width=70;img.height=70;img.style.borderRadius='10px';img.style.border='1px solid #16304a';img.style.objectFit='cover';prev.appendChild(img);});
+    }
+  }
+  bindDrop('#photoMain','#dropMain','#prevMain');
+  bindDrop('#photoWh','#dropWh','#prevWh');
+
+  // multi tracks tags
+  const tagsBox = $('#tracks'); const trackInput = $('#trackInput'); let tracks=[];
+  function redrawTags(){
+    [...tagsBox.querySelectorAll('.tag')].forEach(t=>t.remove());
+    tracks.forEach((t,i)=>{
+      const span=document.createElement('span'); span.className='tag'; span.textContent=t+' ';
+      const b=document.createElement('button'); b.textContent='×'; b.title='remove';
+      b.onclick=()=>{tracks.splice(i,1);redrawTags();};
+      span.appendChild(b); tagsBox.insertBefore(span, trackInput);
+    });
+  }
+  function addTrack(v){v=v.trim(); if(!v) return; if(!tracks.includes(v)) {tracks.push(v); redrawTags();} trackInput.value='';}
+  trackInput.addEventListener('keydown', e=>{
+    if(e.key==='Enter' || e.key===',' ){ e.preventDefault(); addTrack(trackInput.value); }
+    if(e.key==='Backspace' && !trackInput.value && tracks.length){ tracks.pop(); redrawTags(); }
+  });
+
+  // outputs + calcs
+  const outIndices = {}; // not needed; using inline calc
+  const inputs = {
+    orderDate: $('#orderDate'), orderNo: $('#orderNo'), customer: $('#customer'), loadingType: $('#loadingType'),
+    item: $('#item'), itemNotes: $('#itemNotes'), pcsDetails: $('#pcsDetails'), totalPcs: $('#totalPcs'),
+    orgPriceCny: $('#orgPriceCny'), pcsPriceCny: $('#pcsPriceCny'), expressFee: $('#expressFee'), rate: $('#rate'),
+    percentType: $('#percentType'), commissionUsd: $('#commissionUsd'), link: $('#link'), website: $('#website'),
+    customerDecision: $('#customerDecision'), buyItemDate: $('#buyItemDate'), orderNumberExt: $('#orderNumberExt'),
+    staffDecision: $('#staffDecision'), cancelNote: $('#cancelNote'), arriveCn: $('#arriveCn'),
+    itemsCorrect: $('#itemsCorrect'), notCorrectNote: $('#notCorrectNote'), customerAccept: $('#customerAccept'),
+    returnTrack: $('#returnTrack'), returnCode: $('#returnCode'), moneyRefunded: $('#moneyRefunded'),
+    containerCode: $('#containerCode'),
+    arrivedIqCbm: $('#arrivedIqCbm'), arrivedIqDateCbm: $('#arrivedIqDateCbm'), boxNoCbm: $('#boxNoCbm'),
+    orgBoxCbm: $('#orgBoxCbm'), orgCbmPrice: $('#orgCbmPrice'), orgCbm: $('#orgCbm'), totalOrgCbmPrice: $('#totalOrgCbmPrice'),
+    cbmPrice: $('#cbmPrice'), cbm: $('#cbm'), totalOrderCbmPrice: $('#totalOrderCbmPrice'),
+    arrivedIqKg: $('#arrivedIqKg'), arrivedIqDateKg: $('#arrivedIqDateKg'), boxNoKg: $('#boxNoKg'), orgBoxKg: $('#orgBoxKg'),
+    orgKgPrice: $('#orgKgPrice'), orgKg: $('#orgKg'), totalOrgKgPrice: $('#totalOrgKgPrice'), kgPrice: $('#kgPrice'), kg: $('#kg'), totalOrderKgPrice: $('#totalOrderKgPrice'),
+    totalOrderPrice: $('#totalOrderPrice'), paidDeposit: $('#paidDeposit'), paidDepositDate: $('#paidDepositDate'),
+    howRequired: $('#howRequired'), needBeforeReceive: $('#needBeforeReceive'), needBeforeReceiveDate: $('#needBeforeReceiveDate'),
+    customerReceiveDate: $('#customerReceiveDate'), notes: $('#notes'),
+    itemTarget: $('#itemTarget'), commissionTarget: $('#commissionTarget'), cbmTarget: $('#cbmTarget'), kgTarget: $('#kgTarget'), totalTarget: $('#totalTarget'),
+    anyNotes: $('#anyNotes'),
+    photoMain: $('#photoMain'), photoWh: $('#photoWh')
+  };
+
+  function nfusd(v){return nf(v,'$')} function nfcny(v){return nf(v,'¥')}
+
+  function calcPrices(){
+    const pcs=+inputs.totalPcs.value||0, org=+inputs.orgPriceCny.value||0, pcsCny=+inputs.pcsPriceCny.value||0, fee=+inputs.expressFee.value||0, rate=+inputs.rate.value||0.0001;
+    const totalOrgCny=org*pcs, totalOrgUsd=totalOrgCny/rate, pcsUsd=pcsCny/rate, totalPcsCny=(pcsCny*pcs)+fee, totalPcsUsd=(pcsUsd*pcs)+(fee/rate);
+    let percent=parseFloat(inputs.percentType.value); if(isNaN(percent)) percent=0;
+    const pctCommission=totalPcsUsd*percent/100; const manual=+inputs.commissionUsd.value||0; const commission=(manual>0?manual:pctCommission);
+    const grandUsd=totalPcsUsd+commission;
+    return {pcs,totalOrgCny,totalOrgUsd,pcsUsd,totalPcsCny,totalPcsUsd,commission,grandUsd};
+  }
+
+  // status badge
+  function statusBadge(val){
+    const v=(val||'').toUpperCase(); if(v==='CONFIRMED') return '<span class="badge-status badge-ok">CONFIRMED</span>';
+    if(v==='CANCELED') return '<span class="badge-status badge-danger">CANCELED</span>';
+    return '<span class="badge-status badge-warn">PENDING</span>';
+  }
+
+  // row build
+  let counter=0, editIndex=-1;
+  function appendRow(data,no){
+    const tbody=$('#tbl tbody'); const tr=document.createElement('tr'); tr.dataset.no=no;
+    tr.innerHTML=`
+      <td>${no}</td>
+      <td>${data.orderDate||''}</td>
+      <td>${data.orderNo||''}</td>
+      <td>${data.customer||''}</td>
+      <td>${data.loadingType||''}</td>
+      <td>${data.item||''}</td>
+      <td>${data.itemNotes||''}</td>
+      <td>${data.pcsDetails||''}</td>
+      <td class="right">${data.pcs||0}</td>
+      <td>${data.photoMain?'<img src="'+data.photoMain+'" style="width:42px;height:42px;border-radius:8px;border:1px solid #16304a;object-fit:cover" />':''}</td>
+      <td class="right">${nfcny(data.orgPriceCny)}</td>
+      <td class="right">${nfcny(data.totalOrgCny)}</td>
+      <td class="right">${nfusd(data.totalOrgUsd)}</td>
+      <td class="right">${nfcny(data.pcsPriceCny)}</td>
+      <td class="right">${nfcny(data.expressFee)}</td>
+      <td class="right">${Number(data.rate||0).toFixed(4)}</td>
+      <td class="right">${nfusd(data.pcsUsd)}</td>
+      <td class="right">${nfcny(data.totalPcsCny)}</td>
+      <td class="right">${nfusd(data.totalPcsUsd)}</td>
+      <td>${data.percentType||'0%'}</td>
+      <td class="right">${nfusd(data.commission)}</td>
+      <td class="right">${nfusd(data.grandUsd)}</td>
+      <td>${data.link||''}</td>
+      <td>${data.website||''}</td>
+      <td data-status="${data.customerDecision||'PENDING'}">${statusBadge(data.customerDecision)}</td>
+      <td>${data.buyItemDate||''}</td>
+      <td>${data.orderNumberExt||''}</td>
+      <td>${data.staffDecision||''}</td>
+      <td>${data.cancelNote||''}</td>
+      <td>${(data.tracks||[]).map(t=>`<span class="tag">${t}</span>`).join(' ')}</td>
+      <td>${data.arriveCn||''}</td>
+      <td>${data.photoWh?'<img src="'+data.photoWh+'" style="width:42px;height:42px;border-radius:8px;border:1px solid #16304a;object-fit:cover" />':''}</td>
+      <td>${data.itemsCorrect||''}</td>
+      <td>${data.notCorrectNote||''}</td>
+      <td>${data.customerAccept||''}</td>
+      <td>${data.returnTrack||''}</td>
+      <td>${data.returnCode||''}</td>
+      <td class="right">${nfusd(data.moneyRefunded||0)}</td>
+      <td>${data.containerCode||''}</td>
+      <td>${data.arrivedIqCbm||''}</td><td>${data.arrivedIqDateCbm||''}</td><td>${data.boxNoCbm||''}</td>
+      <td class="right">${data.orgBoxCbm||''}</td><td class="right">${nfusd(data.orgCbmPrice||0)}</td><td class="right">${data.orgCbm||''}</td>
+      <td class="right">${nfusd(data.totalOrgCbmPrice||0)}</td><td class="right">${nfusd(data.cbmPrice||0)}</td><td class="right">${data.cbm||''}</td>
+      <td class="right">${nfusd(data.totalOrderCbmPrice||0)}</td>
+      <td>${data.arrivedIqKg||''}</td><td>${data.arrivedIqDateKg||''}</td><td>${data.boxNoKg||''}</td>
+      <td class="right">${data.orgBoxKg||''}</td><td class="right">${nfusd(data.orgKgPrice||0)}</td><td class="right">${data.orgKg||''}</td>
+      <td class="right">${nfusd(data.totalOrgKgPrice||0)}</td><td class="right">${nfusd(data.kgPrice||0)}</td><td class="right">${data.kg||''}</td>
+      <td class="right">${nfusd(data.totalOrderKgPrice||0)}</td>
+      <td class="right">${nfusd(data.totalOrderPrice||0)}</td><td class="right">${nfusd(data.paidDeposit||0)}</td><td>${data.paidDepositDate||''}</td>
+      <td class="right">${nfusd(data.howRequired||0)}</td><td class="right">${nfusd(data.needBeforeReceive||0)}</td><td>${data.needBeforeReceiveDate||''}</td>
+      <td>${data.customerReceiveDate||''}</td><td>${data.notes||''}</td>
+      <td class="right">${nfusd(data.itemTarget||0)}</td><td class="right">${nfusd(data.commissionTarget||0)}</td><td class="right">${nfusd(data.cbmTarget||0)}</td>
+      <td class="right">${nfusd(data.kgTarget||0)}</td><td class="right">${nfusd(data.totalTarget||0)}</td><td>${data.anyNotes||''}</td>
+      <td class="actions">
+        <button class="btn secondary small" data-action="edit">Edit</button>
+        <button class="btn danger small" data-action="delete">Delete</button>
+      </td>`;
+    tbody.appendChild(tr);
+  }
+
+  function refreshCount(){
+    const c=$('#tbl tbody').children.length; $('#rowCount').textContent=c+(c===1?' item':' items');
+  }
+
+  function readFirstThumb(input){return input.files && input.files[0] ? URL.createObjectURL(input.files[0]) : ''}
+
+  function formData(){
+    const p = calcPrices();
+    const photoMainUrl = readFirstThumb(inputs.photoMain);
+    const photoWhUrl = readFirstThumb(inputs.photoWh);
+    const data = {
+      orderDate: inputs.orderDate.value, orderNo: inputs.orderNo.value, customer: inputs.customer.value, loadingType: inputs.loadingType.value,
+      item: inputs.item.value, itemNotes: inputs.itemNotes.value, pcsDetails: inputs.pcsDetails.value, pcs: p.pcs,
+      photoMain: photoMainUrl, orgPriceCny:+inputs.orgPriceCny.value||0, totalOrgCny:p.totalOrgCny, totalOrgUsd:p.totalOrgUsd,
+      pcsPriceCny:+inputs.pcsPriceCny.value||0, expressFee:+inputs.expressFee.value||0, rate:+inputs.rate.value||0,
+      pcsUsd:p.pcsUsd, totalPcsCny:p.totalPcsCny, totalPcsUsd:p.totalPcsUsd, percentType: inputs.percentType.value,
+      commission:p.commission, grandUsd:p.grandUsd, link: inputs.link.value, website: inputs.website.value,
+      customerDecision: inputs.customerDecision.value, buyItemDate: inputs.buyItemDate.value, orderNumberExt: inputs.orderNumberExt.value,
+      staffDecision: inputs.staffDecision.value, cancelNote: inputs.cancelNote.value, tracks:[...tracks], arriveCn: inputs.arriveCn.value,
+      photoWh: photoWhUrl, itemsCorrect: inputs.itemsCorrect.value, notCorrectNote: inputs.notCorrectNote.value, customerAccept: inputs.customerAccept.value,
+      returnTrack: inputs.returnTrack.value, returnCode: inputs.returnCode.value, moneyRefunded:+inputs.moneyRefunded.value||0,
+      containerCode: inputs.containerCode.value,
+      arrivedIqCbm: inputs.arrivedIqCbm.value, arrivedIqDateCbm: inputs.arrivedIqDateCbm.value, boxNoCbm: inputs.boxNoCbm.value,
+      orgBoxCbm:+inputs.orgBoxCbm.value||0, orgCbmPrice:+inputs.orgCbmPrice.value||0, orgCbm:+inputs.orgCbm.value||0, totalOrgCbmPrice:+inputs.totalOrgCbmPrice.value||0,
+      cbmPrice:+inputs.cbmPrice.value||0, cbm:+inputs.cbm.value||0, totalOrderCbmPrice:+inputs.totalOrderCbmPrice.value||0,
+      arrivedIqKg: inputs.arrivedIqKg.value, arrivedIqDateKg: inputs.arrivedIqDateKg.value, boxNoKg: inputs.boxNoKg.value, orgBoxKg:+inputs.orgBoxKg.value||0,
+      orgKgPrice:+inputs.orgKgPrice.value||0, orgKg:+inputs.orgKg.value||0, totalOrgKgPrice:+inputs.totalOrgKgPrice.value||0, kgPrice:+inputs.kgPrice.value||0, kg:+inputs.kg.value||0, totalOrderKgPrice:+inputs.totalOrderKgPrice.value||0,
+      totalOrderPrice:+inputs.totalOrderPrice.value||0, paidDeposit:+inputs.paidDeposit.value||0, paidDepositDate: inputs.paidDepositDate.value,
+      howRequired:+inputs.howRequired.value||0, needBeforeReceive:+inputs.needBeforeReceive.value||0, needBeforeReceiveDate: inputs.needBeforeReceiveDate.value,
+      customerReceiveDate: inputs.customerReceiveDate.value, notes: inputs.notes.value,
+      itemTarget:+inputs.itemTarget.value||0, commissionTarget:+inputs.commissionTarget.value||0, cbmTarget:+inputs.cbmTarget.value||0, kgTarget:+inputs.kgTarget.value||0, totalTarget:+inputs.totalTarget.value||0,
+      anyNotes: inputs.anyNotes.value
+    };
+    // update summary top
+    $('#sumOrderNo').textContent = data.orderNo || '—';
+    $('#sumCustomer').textContent = data.customer || '—';
+    return data;
+  }
+
+  $('#addRow').addEventListener('click', ()=>{
+    if(editIndex!==-1){ alert('You are editing a row. Click "Save Changes".'); return; }
+    const data=formData(); appendRow(data, ++counter); clearForm(false); refreshCount();
+  });
+
+  $('#tbl').addEventListener('click', e=>{
+    const btn=e.target.closest('button'); if(!btn) return; const tr=e.target.closest('tr'); if(!tr) return;
+    if(btn.dataset.action==='delete'){ if(confirm('Delete this row?')){ tr.remove(); refreshCount(); } }
+    if(btn.dataset.action==='edit'){ loadRow(tr); }
+  });
+
+  function loadRow(tr){
+    const t=[...tr.children].map(td=>td.innerText.trim());
+    inputs.orderDate.value = t[1]; inputs.orderNo.value = t[2]; inputs.customer.value = t[3];
+    inputs.loadingType.value = t[4]; inputs.item.value=t[5]; inputs.itemNotes.value=t[6]; inputs.pcsDetails.value=t[7];
+    inputs.totalPcs.value=parseInt(t[8])||1; inputs.orgPriceCny.value=parseFloat(clean(t[10])); inputs.pcsPriceCny.value=parseFloat(clean(t[13]));
+    inputs.expressFee.value=parseFloat(clean(t[14])); inputs.rate.value=parseFloat(t[15])||7.2; inputs.percentType.value=t[19];
+    inputs.commissionUsd.value=parseFloat(clean(t[20]))||0; inputs.link.value=t[22]; inputs.website.value=t[23];
+    inputs.customerDecision.value = tr.querySelector('td[data-status]')?.dataset.status || 'PENDING';
+    inputs.buyItemDate.value=t[25]; inputs.orderNumberExt.value=t[26]; inputs.staffDecision.value=t[27]; inputs.cancelNote.value=t[28];
+    // tracks
+    tracks = [...tr.children[29].querySelectorAll('.tag')].map(el=>el.textContent.replace('×','').trim()); redrawTags();
+    inputs.arriveCn.value=t[30];
+    inputs.itemsCorrect.value=t[32]; inputs.notCorrectNote.value=t[33]; inputs.customerAccept.value=t[34];
+    inputs.returnTrack.value=t[35]; inputs.returnCode.value=t[36]; inputs.moneyRefunded.value=parseFloat(clean(t[37]))||0; inputs.containerCode.value=t[38];
+
+    inputs.arrivedIqCbm.value=t[39]; inputs.arrivedIqDateCbm.value=t[40]; inputs.boxNoCbm.value=t[41];
+    inputs.orgBoxCbm.value=parseFloat(t[42])||0; inputs.orgCbmPrice.value=parseFloat(clean(t[43]))||0; inputs.orgCbm.value=parseFloat(t[44])||0;
+    inputs.totalOrgCbmPrice.value=parseFloat(clean(t[45]))||0; inputs.cbmPrice.value=parseFloat(clean(t[46]))||0; inputs.cbm.value=parseFloat(t[47])||0;
+    inputs.totalOrderCbmPrice.value=parseFloat(clean(t[48]))||0;
+
+    inputs.arrivedIqKg.value=t[49]; inputs.arrivedIqDateKg.value=t[50]; inputs.boxNoKg.value=t[51];
+    inputs.orgBoxKg.value=parseFloat(t[52])||0; inputs.orgKgPrice.value=parseFloat(clean(t[53]))||0; inputs.orgKg.value=parseFloat(t[54])||0;
+    inputs.totalOrgKgPrice.value=parseFloat(clean(t[55]))||0; inputs.kgPrice.value=parseFloat(clean(t[56]))||0; inputs.kg.value=parseFloat(t[57])||0;
+    inputs.totalOrderKgPrice.value=parseFloat(clean(t[58]))||0;
+
+    inputs.totalOrderPrice.value=parseFloat(clean(t[59]))||0; inputs.paidDeposit.value=parseFloat(clean(t[60]))||0; inputs.paidDepositDate.value=t[61];
+    inputs.howRequired.value=parseFloat(clean(t[62]))||0; inputs.needBeforeReceive.value=parseFloat(clean(t[63]))||0; inputs.needBeforeReceiveDate.value=t[64];
+    inputs.customerReceiveDate.value=t[65]; inputs.notes.value=t[66];
+    inputs.itemTarget.value=parseFloat(clean(t[67]))||0; inputs.commissionTarget.value=parseFloat(clean(t[68]))||0; inputs.cbmTarget.value=parseFloat(clean(t[69]))||0;
+    inputs.kgTarget.value=parseFloat(clean(t[70]))||0; inputs.totalTarget.value=parseFloat(clean(t[71]))||0; inputs.anyNotes.value=t[72];
+
+    editIndex=parseInt(tr.dataset.no,10); $('#saveEdit').style.display=''; $('#editState').style.display='';
+    document.getElementById('formCard').scrollIntoView({behavior:'smooth',block:'start'});
+    // summary
+    $('#sumOrderNo').textContent = inputs.orderNo.value||'—'; $('#sumCustomer').textContent=inputs.customer.value||'—';
+  }
+
+  $('#saveEdit').addEventListener('click', ()=>{
+    if(editIndex===-1) return;
+    const data=formData();
+    const tr=[...$('#tbl tbody').children].find(r=>parseInt(r.dataset.no,10)===editIndex);
+    if(tr){
+      const newTr=document.createElement('tr'); newTr.dataset.no=editIndex;
+      $('#tbl tbody').replaceChild(newTr,tr);
+      appendRow(data, editIndex);
+      clearForm(false); editIndex=-1; $('#saveEdit').style.display='none'; $('#editState').style.display='none';
+    }
+  });
+
+  function clean(s){return String(s||'').replace(/[^0-9.\-]/g,'')}
+
+  // export CSV
+  $('#exportCsv').addEventListener('click', ()=>{
+    const rows = tableMatrix(); if(rows.length<2){alert('Nothing to export.');return;}
+    const csv = rows.map(r=>r.map(cell=>`"${String(cell).replace(/"/g,'""')}"`).join(',')).join('\n');
+    saveAs(new Blob([csv],{type:'text/csv;charset=utf-8;'}),'orders_step3.csv');
+  });
+
+  // export Excel
+  $('#exportExcel').addEventListener('click', async ()=>{
+    const rows=tableMatrix(); if(rows.length<2){alert('Nothing to export.');return;}
+    const wb=new ExcelJS.Workbook(); const ws=wb.addWorksheet('STEP 3');
+    ws.views=[{state:'frozen',ySplit:1}];
+    ws.getRow(1).font={bold:true,color:{argb:'FFC6E9F4'}}; ws.getRow(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0C1424'}};
+    rows[0].forEach((h,i)=>ws.getColumn(i+1).width = Math.min(Math.max(String(h).length+4, 12), 28));
+    rows.forEach((r,ri)=>{ const row=ws.addRow(r); row.eachCell(c=>{ c.font={color:{argb:'FFE5E7EB'}}; c.border={bottom:{style:'hair',color:{argb:'FF1F2A3A'}}}; if(ri%2===1)c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF0E172A'}}; }); });
+    const buf=await wb.xlsx.writeBuffer(); saveAs(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),'orders_step3.xlsx');
+  });
+
+  function tableMatrix(){
+    const head=[...$('#tbl thead th')].map(th=>th.innerText.trim()).slice(0,-1);
+    const rows=[head];
+    $('#tbl tbody tr').forEach(tr=>{
+      const cells=[...tr.children].slice(0,-1).map((td,i)=>{
+        // convert status badge, images, tracks -> plain text
+        if(td.querySelector('[data-status]')||td.hasAttribute('data-status')) return td.dataset.status||'PENDING';
+        if(i===9 || i===31){ // images thumbs columns
+          return ''; // أو ضع رابط لاحقًا لو حفظت على سيرفر
+        }
+        if(i===29){ // tracks chips
+          return [...td.querySelectorAll('.tag')].map(e=>e.textContent.trim()).join(' | ');
+        }
+        return td.innerText.replace(/\s+/g,' ').trim();
+      });
+      rows.push(cells);
+    });
+    return rows;
+  }
+
+  // reset
+  $('#resetForm').addEventListener('click', ()=>clearForm(true));
+  function clearForm(clearFiles){
+    $$('.form input, .form select').forEach(el=>{
+      if(el.type==='date' || el.type==='text'){ if(!['username'].includes(el.id)) el.value=''; }
+    });
+    inputs.totalPcs.value=1; inputs.expressFee.value=0; inputs.rate.value=7.20; inputs.percentType.value='0%'; inputs.commissionUsd.value=0;
+    tracks=[]; redrawTags();
+    if(clearFiles){ $('#prevMain').innerHTML=''; $('#prevWh').innerHTML=''; inputs.photoMain.value=''; inputs.photoWh.value=''; }
+    $('#sumOrderNo').textContent='—'; $('#sumCustomer').textContent='—';
+  }
+
+  // defaults
+  inputs.orderDate.valueAsDate=new Date();
+})();
+</script>
+</body>
+</html>
